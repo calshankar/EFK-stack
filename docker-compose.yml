@@ -146,9 +146,9 @@ services:
   apm_server:
     image: docker.elastic.co/apm/apm-server:${TAG}
     container_name: apm_server
-    ports: ['127.0.0.1:8200:8200']
+    ports: ['0.0.0.0:8200:8200']
     networks: ['EFK']
-    command: -e -E 'output.elasticsearch.password=${ELASTIC_PASSWORD}'
+    command: -e -E 'apm-server.host=0.0.0.0:8200' -E 'output.elasticsearch.password=${ELASTIC_PASSWORD}'
     depends_on: ['elasticsearch','setup_apm_server']
 
   setup_kibana:
