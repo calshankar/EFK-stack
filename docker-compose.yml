@@ -1,12 +1,8 @@
 version: '3'
 services:
   app:
-    image: node:boron
-    container_name: app-boron
-    volumes:
-      - ./code:/usr/src/app
-    working_dir: /usr/src/app
-    command: sh -c 'npm install; npm start'
+    image: calshankar/node-js:v1.0
+    container_name: app-shankar
     ports:
       - "3000:3000"
     depends_on: ['fluentd', 'mongo']
@@ -18,7 +14,7 @@ services:
       driver: "fluentd"
       options:
         fluentd-address: localhost:24224
-        tag: app-boron
+        tag: app-shankar
     networks:
       - EFK
 
@@ -27,7 +23,7 @@ services:
     image: mongo
     command: mongod --smallfiles
     volumes:
-      - ./data:/data/db
+      - /tmp/data:/data/db
     ports:
       - "27017:27017"
     networks:
@@ -100,7 +96,7 @@ services:
     command: -e -E 'output.elasticsearch.password=${ELASTIC_PASSWORD}'
     # If the host system has logs at "/var/log", mount them at "/mnt/log"
     # inside the container, where Filebeat can find them.
-    # volumes: ['/var/log:/mnt/log:ro']
+    volumes: ['/var/log:/mnt/log:ro']
     networks: ['EFK']
     depends_on: ['elasticsearch', 'setup_filebeat']
 
@@ -118,10 +114,10 @@ services:
     # rather than the Metricbeat container. It's problematic with Docker for
     # Windows, however, since "/proc", "/sys" etc. don't exist on Windows.
     # The same likely applies to OSX (needs testing).
-    # volumes:
-    #   - /proc:/hostfs/proc:ro
-    #   - /sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro
-    #   - /:/hostfs:ro
+    volumes:
+       - /proc:/hostfs/proc:ro
+       - /sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro
+       - /:/hostfs:ro
     command: -e -E 'output.elasticsearch.password=${ELASTIC_PASSWORD}' # -system.hostfs=/hostfs
     networks: ['EFK']
     depends_on: ['elasticsearch', 'setup_metricbeat']
