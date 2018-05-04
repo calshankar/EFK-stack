@@ -53,7 +53,7 @@ services:
       - discovery.type=single-node
       - cluster.name=docker-cluster
       - bootstrap.memory_lock=true
-      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - ES_JAVA_OPTS=-Xms512m -Xmx1024m
       - http.host=0.0.0.0
       - transport.host=127.0.0.1
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
@@ -108,19 +108,23 @@ services:
     depends_on: ['elasticsearch', 'setup_heartbeat']
 
   metricbeat:
-    image: docker.elastic.co/beats/metricbeat:${TAG}
+    build:
+      context: ./dockerfiles
+      dockerfile: metricbeat_Dockerfile.yml
     container_name: metricbeat
     # The commented sections below enable Metricbeat to monitor the Docker host,
     # rather than the Metricbeat container. It's problematic with Docker for
     # Windows, however, since "/proc", "/sys" etc. don't exist on Windows.
     # The same likely applies to OSX (needs testing).
     volumes:
-       - /proc:/hostfs/proc:ro
-       - /sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro
-       - /:/hostfs:ro
-    command: -e -E 'output.elasticsearch.password=${ELASTIC_PASSWORD}' # -system.hostfs=/hostfs
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /proc:/hostfs/proc:ro
+      - /sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro
+      - /:/hostfs:ro
+    command: -e -E 'output.elasticsearch.password=${ELASTIC_PASSWORD}' -system.hostfs=/hostfs
     networks: ['EFK']
     depends_on: ['elasticsearch', 'setup_metricbeat']
+    user: root
 
   packetbeat:
     image: docker.elastic.co/beats/packetbeat:${TAG}
